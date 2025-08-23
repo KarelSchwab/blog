@@ -1,25 +1,21 @@
-# Convert BooleanField to CharField with choices
+I recently ran into a situation where I needed to convert a `BooleanField` (True / False) to a `CharField` with 
+three choices—**Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward, however, 
+this feature has been in use for a while, and I wanted to preserve both the original state and the field name during 
+the migration.
 
-I recently ran into a situation where I had a `BooleanField` that had to be converted to a `CharField` with three 
-choices (Yes, No, and Maybe). With the django migration system it would be a trivial change to make, however, the 
-feature has been in use for some time now and I wanted to preserve the original state and name of the boolean field 
-when performing the migration.
+For this example I’ll use a model called `Invite`. It’s a simple model that represents an invitation where the 
+recipient RSVPs to attending. Initially the RSVP was a boolean—Yes or No—and we’re adding a third option, Maybe, so 
+we’ll migrate the field to a `CharField` with choices.
 
-For this example I'll use a model called `Invite`. It's a rather simple implementation of an invitation sent to someone
-where we expect the recipient to RSVP yes or no whether they would be attending or not. In this feature we will add the
-ability to also RSVP "Maybe" instead of just yes or no.
+For invitations where a recipient has RSVP’d **Yes**, we need to preserve that they’re attending, while ensuring new 
+invitations default to **Maybe**. We also want the option to roll the change back if needed.
 
-For the invitations where a recipient has RSVPd "yes", we need to preserve that they will be attending while ensuring
-that any new invitations created default to "Maybe". Additionally we also want to be able to roll back the changes if
-we ever need to.
-
-This will involve creating a temporary field, saving the existing state in the temporary field, altering the
-original field to have the desired choices, updating the state of the original field, and lastly removing the temporary
-field.
+We’ll do this in a few steps: create a temporary field, copy the existing values into it, alter the original field to 
+a `CharField` with the new choices, and then lastly remove the temporary field.
 
 This is the code that we'll be starting with:
 
-`invite/models.py5
+`invite/models.py`
 
 ```python
 from django.db import models
@@ -33,7 +29,9 @@ class Invite(models.Model):
     def __str__(self) -> str:
         return f"{self.email} - {self.rsvp_status}"
 ```
-This is where we want to end up:
+
+This is what we want the result to be:
+
 
 ```python
 from django.db import models
@@ -54,29 +52,27 @@ class Invite(models.Model):
 
     def __str__(self) -> str:
         return f"{self.email} - {self.rsvp_status}"
-
 ```
 
-## Step 1: Creating a temporary field
+## Step 1: Create a temporary field
 
-Lets start by defining the available choices for the RSVP status
+We'll start by defining the available choices for the RSVP status using Django's `models.TextChoices` subclass. You can
+read more about them in the [Django docs](https://docs.djangoproject.com/en/5.2/ref/models/fields/#enumeration-types) 
 
 ```python
 class RSVPChoices(models.TextChoices):
     YES = "yes", "Yes"
     NO = "no", "No"
     MAYBE = "maybe", "Maybe"
-
 ```
 
-Next we need to add a temporary field that we will use to do the initial setup of our updated rsvp status field. This
-temporary field will later be switched out with the original field and it therefore needs to match the structure of
-the end result. Well, almost match. For the time being we need to make the field nullable and allow it to be blank. The
-reason for this is... (TODO: Add reason)
+Now that we’ve defined our choices, we’ll add a temporary field to stage the updated RSVP status. This temporary field 
+should mirror the final field (same `max_length` and `choices`) so we can swap it out later (this will make sense soon). 
+For now, we’ll also make it `nullable` and allow `blank` values. That avoids any NOT NULL or default value errors 
+Django might raise during this migration. After backfilling the existing rows, we will enforce a default value.
 
-I'll call this field `temp_rsvp_status`.
+Let's call this field `temp_rsvp_status` and update the code:
 
-Updated code thus far:
 
 ```python
 from django.db import models
@@ -98,16 +94,17 @@ class Invite(models.Model):
 
     def __str__(self) -> str:
         return f"{self.email} - {self.rsvp_status}"
-
 ```
 
-Create a migration...
+Create a migration to have our change take effect.
+
 
 ```bash
 python manage.py makemigrations
 ```
 
 The migration should look something like this:
+
 
 ```python
 from django.db import migrations, models
@@ -135,31 +132,37 @@ class Migration(migrations.Migration):
             ),
         ),
     ]
-
 ```
 
-Go ahead and apply the migration if you want and have a look at the model in the django backend. You should see the new
-field with a dropdown contains all the choice options we specified. Don't make changes to the model in the backend.
+Go ahead and apply the migration and have a look at the model in the Django admin. You should see the new
+field with a dropdown containing all the choices we specified.
+
+**Note:** Don’t save changes in the admin yet. This is a temporary field that we’ll backfill and swap with the original 
+field in the next steps, and editing it now could result in inconsistent data.
+
 
 ```bash
 python manage.py migrate
 ```
 
-## Step 2: Save the existing state in the temporary field
+## Step 2: Copy the existing state into the temporary field
 
-WARNING: This is where it starts to get a bit more tricky.
+This is where it starts to get a bit more tricky.
 
-Now that we have the temporary field, we can go ahead and update it to match the state of the existing rsvp field. We
-want "yes" to be selected if the existing rsvp status is ticked and "Maybe" if it is not. 
+Now that we have the temporary field, we can update it to match the state of the existing `rsvp_status` field. We
+want **Yes** to be selected if the existing `rsvp_status` is ticked (True) and **Maybe** if it is not (False). 
 
-To do this we need to create an empty migration where we will handel that logic ourselves. For that we'll use the 
+To do this we need to create an empty migration where we will handle that logic ourselves. For that we'll use the 
 following command:
+
 
 ```bash
 python manage.py makemigrations <app_name> --empty --name <name_for_the_migration>
 ```
 
-The `<app_name>` is the name of the app that this model lives in. Read more on django apps in the docs (TODO: Add link)
+The `<app_name>` is the name of the app that this model lives in. Read more on Django apps in 
+the [docs](https://docs.djangoproject.com/en/5.2/ref/applications/#module-django.apps)
+
 The `<name_for_the_migration>` is just a descriptive name for the migration file.
 
 The full command in our case:
@@ -168,7 +171,8 @@ The full command in our case:
 python manage.py makemigrations invite --empty --name copy_rsvp_status_details_to_temp
 ```
 
-Check your migrations folder in the specified app. You should see a migration that looks something like this:
+Check your migrations folder in the specified app. We should have an empty migration that looks something like this:
+
 
 ```python
 from django.db import migrations
@@ -184,9 +188,9 @@ class Migration(migrations.Migration):
     ]
 ```
 
-We want to be able to apply the migrations while also being able to still unapply the migrations as well. We need
-to tell Django how to do that with 2 seperate functions. These functions I'll call `copy_forwards` and `copy_backwards`,
-however, the names are up to you.
+We want this migration to be reversible. That means defining two separate functions, one for migrating **forwards** 
+and one for **backwards**. Let's call them `copy_forwards` and `copy_backwards`(the names don’t matter).
+
 
 ```python
 from django.db import migrations
@@ -215,9 +219,13 @@ class Migration(migrations.Migration):
     ]
 ```
 
-You might have noticed the `apps` and `schema_editor` parameters to each of the functions. TODO: Add reason for them
+You might have noticed the `apps` and `schema_editor` parameters to each of the functions. I won't go into too much 
+detail about it but `apps` gives you access to *Django's historical app registry*. This lets us "travel back in 
+time" and load our model in the state when the migration takes place and not our current version of the model. 
+`schema_editor`, on the other hand, is *Django's backend-aware DDL helper*. It can be used when writing custom 
+operations to execute DDL or SQL safely. We won't be using it for this example.
 
-These functions are rather simple and all they need to do is get the model and then copy the state beween the two 
+These functions are rather simple and all they need to do is get the model and then copy the state between the two 
 fields. It will be easier to understand by reading the code:
 
 
@@ -249,18 +257,18 @@ def copy_backwards(apps, schema_editor):
     Invite.objects.filter(temp_rsvp_status="yes").update(rsvp_status=True)
 
     # Wherever the temp_rsvp_status is set to "no" or "maybe" change it back
-    # to false. exclude is used instead of filter because we want to catch 
+    # to False. exclude is used instead of filter because we want to catch 
     # both "no" and "maybe". I.e. anything that is not "yes"
     Invite.objects.exclude(temp_rsvp_status="yes").update(rsvp_status=False)
-
 ```
 
-I think the code is self-explanitory. When we migrate "forwards" (apply the migration) we update the temporary rsvp 
-status field to match the desired state based on the existing rsvp status field. When we migration "backwards"
-(unaply the migration) we do the oposite essentially reversing the states.
+The code is self-explanatory. When we migrate **forwards** (apply the migration), we update the temporary RSVP field 
+to the desired value based on the existing boolean field. When we migrate **backwards** (unapply/rollback), we do the 
+opposite, restoring the original boolean values.
 
-The last thing we need to do in this step is to tell Django to run our functions when working with our new migration.
-We do that by updating the `operations` list at the bottom of the file.
+The last thing we need to do in this step is to tell Django to run our functions. We do that by updating the 
+`operations` list at the bottom of the file and adding the `RunPython` operation. You can read more about 
+it [here](https://docs.djangoproject.com/en/5.2/howto/writing-migrations/#how-to-create-database-migrations)
 
 ```python
 operations = [
@@ -300,7 +308,7 @@ def copy_backwards(apps, schema_editor):
     Invite.objects.filter(temp_rsvp_status="yes").update(rsvp_status=True)
 
     # Wherever the temp_rsvp_status is set to "no" or "maybe" change it back
-    # to false. exclude is used instead of filter because we want to catch 
+    # to False. exclude is used instead of filter because we want to catch 
     # both "no" and "maybe". I.e. anything that is not "yes"
     Invite.objects.exclude(temp_rsvp_status="yes").update(rsvp_status=False)
 
@@ -316,8 +324,8 @@ class Migration(migrations.Migration):
     ]
 ```
 
-We can apply the migration. You will see that the temporary rsvp status field has been update to match our existing
-field. `True -> Yes | False -> Maybe`
+Go ahead and apply the migration. If you go to the Django admin you will see that the temporary RSVP status field has 
+been updated to match our existing RSVP field. **True** has been mapped to **Yes** while **False** to **Maybe**.
 
 ```bash
 python manage.py migrate
@@ -325,14 +333,14 @@ python manage.py migrate
 
 ## Step 3: Alter the original field
 
-With our copy logic in place we now need to swap the original rsvp field with the new one. For this we will create
+With our copy logic in place we now need to swap the original RSVP field with the new one. For this we will create
 another empty migration and write some custom rename logic.
 
 ```bash
 python manage.py makemigrations invite --empty --name swap_rsvp_status_with_temp
 ```
 
-This is another case where reading the code will make more sense than me explaining it
+This is another case where reading the code will make more sense than me explaining it.
 
 ```python
 from django.db import migrations, models
@@ -371,12 +379,15 @@ class Migration(migrations.Migration):
             ),
         ),
     ]
-
 ```
 
-## Step 4: Cleanup
+```bash
+python manage.py migrate
+```
 
-Last we need to do some cleanup. In models.py, remove the temporary rsvp status and ensure that it matches
+## Step 4: Cleanup, remove the temporary field
+
+Last we need to do some cleanup. Remove the temporary RSVP status field and ensure that the constraints match that of 
 our migration.
 
 ```python
@@ -398,8 +409,8 @@ class Invite(models.Model):
 
     def __str__(self) -> str:
         return f"{self.email} - {self.rsvp_status}"
-
 ```
+
 Make the migrations one last time:
 
 ```bash
@@ -407,7 +418,7 @@ python manage.py makemigrations
 ```
 
 You should see something like this printed in the terminal. Note how we removed `temp_rsvp_status` but it shows us 
-that we removed `old_rsvp_status`. This is good. It means that the step where we swapped the fields worked correctly.
+that we removed `old_rsvp_status`. This is good. It means that the step where we swapped the fields worked as expected.
 
 ```text
 Migrations for 'invite':
@@ -416,12 +427,14 @@ Migrations for 'invite':
 ```
 
 Go ahead and apply the migration
+
 ```bash
 python manage.py migrate
 ```
 
-And that's it. Your new rsvp status checkbox should now reflect the state of the previous checkbox. Just how we want 
+And that's it. Your new RSVP status choice should now reflect the state of the previous checkbox. Just how we want 
 it.
 
-You can access the code on GitHub. Head on over to the commits and see each step in its own commit.
+You can access the code on [GitHub](https://github.com/KarelSchwab/boolean_to_choice_field). Head on over to the 
+`commits` to see each step in its own commit.
 
