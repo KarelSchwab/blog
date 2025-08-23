@@ -15,9 +15,7 @@ a `CharField` with the new choices, and then lastly remove the temporary field.
 
 This is the code that we'll be starting with:
 
-`invite/models.py`
-
-```python
+```python {title="invite/models.py"}
 from django.db import models
 
 
@@ -33,7 +31,7 @@ class Invite(models.Model):
 This is what we want the result to be:
 
 
-```python
+```python {title="invite/models.py"}
 from django.db import models
 
 
@@ -59,7 +57,7 @@ class Invite(models.Model):
 We'll start by defining the available choices for the RSVP status using Django's `models.TextChoices` subclass. You can
 read more about them in the [Django docs](https://docs.djangoproject.com/en/5.2/ref/models/fields/#enumeration-types) 
 
-```python
+```python {title="invite/models.py"}
 class RSVPChoices(models.TextChoices):
     YES = "yes", "Yes"
     NO = "no", "No"
@@ -74,7 +72,7 @@ Django might raise during this migration. After backfilling the existing rows, w
 Let's call this field `temp_rsvp_status` and update the code:
 
 
-```python
+```python {title="invite/models.py"}
 from django.db import models
 
 
@@ -106,7 +104,7 @@ python manage.py makemigrations
 The migration should look something like this:
 
 
-```python
+```python {title="invite/migrations/0001_initial.py"}
 from django.db import migrations, models
 
 
@@ -174,7 +172,7 @@ python manage.py makemigrations invite --empty --name copy_rsvp_status_details_t
 Check your migrations folder in the specified app. We should have an empty migration that looks something like this:
 
 
-```python
+```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
 from django.db import migrations
 
 
@@ -192,7 +190,7 @@ We want this migration to be reversible. That means defining two separate functi
 and one for **backwards**. Let's call them `copy_forwards` and `copy_backwards`(the names don’t matter).
 
 
-```python
+```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
 from django.db import migrations
 
 def copy_forwards(apps, schema_editor):
@@ -229,7 +227,7 @@ These functions are rather simple and all they need to do is get the model and t
 fields. It will be easier to understand by reading the code:
 
 
-```python
+```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
 def copy_forwards(apps, schema_editor):
     """
     Used when applying the migration
@@ -270,7 +268,7 @@ The last thing we need to do in this step is to tell Django to run our functions
 `operations` list at the bottom of the file and adding the `RunPython` operation. You can read more about 
 it [here](https://docs.djangoproject.com/en/5.2/howto/writing-migrations/#how-to-create-database-migrations)
 
-```python
+```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
 operations = [
     migrations.RunPython(copy_forwards, copy_backwards)
 ]
@@ -278,7 +276,7 @@ operations = [
 
 Full code example:
 
-```python
+```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
 from django.db import migrations
 
 def copy_forwards(apps, schema_editor):
@@ -342,7 +340,7 @@ python manage.py makemigrations invite --empty --name swap_rsvp_status_with_temp
 
 This is another case where reading the code will make more sense than me explaining it.
 
-```python
+```python {title="invite/migrations/0003_copy_rsvp_status_details_to_temp.py"}
 from django.db import migrations, models
 
 
@@ -390,7 +388,7 @@ python manage.py migrate
 Last we need to do some cleanup. Remove the temporary RSVP status field and ensure that the constraints match that of 
 our migration.
 
-```python
+```python {title="invite/models.py"}
 from django.db import models
 
 
