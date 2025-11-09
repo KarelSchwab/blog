@@ -1,10 +1,10 @@
 I recently ran into a situation where I needed to convert a `BooleanField` (True / False) to a `CharField` with 
-three choices—**Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward, however, 
+three choices-**Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward, however,
 this feature has been in use for a while, and I wanted to preserve both the original state and the field name during 
 the migration.
 
 For this example I’ll use a model called `Invite`. It’s a simple model that represents an invitation where the 
-recipient RSVPs to attending. Initially the RSVP was a boolean—Yes or No—and we’re adding a third option, Maybe, so 
+recipient RSVPs to attending. Initially the RSVP was a boolean-Yes or No-and we’re adding a third option, Maybe, so
 we’ll migrate the field to a `CharField` with choices.
 
 For invitations where a recipient has RSVP’d **Yes**, we need to preserve that they’re attending, while ensuring new 
