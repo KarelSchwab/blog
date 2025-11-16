@@ -1,10 +1,10 @@
 I recently ran into a situation where I needed to convert a `BooleanField` (True / False) to a `CharField` with 
-three choices-**Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward, however,
+three choices—**Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward, however, 
 this feature has been in use for a while, and I wanted to preserve both the original state and the field name during 
 the migration.
 
 For this example I’ll use a model called `Invite`. It’s a simple model that represents an invitation where the 
-recipient RSVPs to attending. Initially the RSVP was a boolean-Yes or No-and we’re adding a third option, Maybe, so
+recipient RSVPs to attending. Initially the RSVP was a boolean—Yes or No—and we’re adding a third option, Maybe, so 
 we’ll migrate the field to a `CharField` with choices.
 
 For invitations where a recipient has RSVP’d **Yes**, we need to preserve that they’re attending, while ensuring new 
@@ -15,7 +15,7 @@ a `CharField` with the new choices, and then lastly remove the temporary field.
 
 This is the code that we'll be starting with:
 
-```python {title="invite/models.py"}
+```python title="invite/models.py"
 from django.db import models
 
 
@@ -57,7 +57,7 @@ class Invite(models.Model):
 We'll start by defining the available choices for the RSVP status using Django's `models.TextChoices` subclass. You can
 read more about them in the [Django docs](https://docs.djangoproject.com/en/5.2/ref/models/fields/#enumeration-types) 
 
-```python {title="invite/models.py"}
+```python title="invite/models.py"
 class RSVPChoices(models.TextChoices):
     YES = "yes", "Yes"
     NO = "no", "No"
@@ -266,7 +266,7 @@ opposite, restoring the original boolean values.
 
 The last thing we need to do in this step is to tell Django to run our functions. We do that by updating the 
 `operations` list at the bottom of the file and adding the `RunPython` operation. You can read more about 
-it [here](https://docs.djangoproject.com/en/5.2/howto/writing-migrations/#how-to-create-database-migrations)
+it in the [django docs](https://docs.djangoproject.com/en/5.2/howto/writing-migrations/#how-to-create-database-migrations)
 
 ```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
 operations = [
@@ -435,4 +435,3 @@ it.
 
 You can access the code on [GitHub](https://github.com/KarelSchwab/boolean_to_choice_field). Head on over to the 
 `commits` to see each step in its own commit.
-
