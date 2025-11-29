@@ -4,7 +4,7 @@ are the values. Under the hood it is just a Python dictionary with some niceties
 keep count of objects stored within.
 
 <u>Read more about hashable objects in my posts called 
-[Hashable objects in Python](https://karelschwab.com/hashable-objects-in-python).</u>
+[Hashable objects in Python](https://karelschwab.com/blog/hashable-objects-in-python).</u>
 
 **_NOTE:_** The values (counts) stored in the `Counter` can be positive or negative as well as any data type 
 that supports addition and subtraction. However, the documentation warns that not all methods work with 
