@@ -3,7 +3,10 @@ And by things I mean any hashable objects. In a `Counter` the hashable objects a
 are the values. Under the hood it is just a Python dictionary with some niceties to allow us to easily
 keep count of objects stored within.
 
-**NOTE:** The values (counts) stored in the `Counter` can be positive or negative as well as any data type 
+<u>Read more about hashable objects in my posts called 
+[Hashable objects in Python](https://karelschwab.com/hashable-objects-in-python).</u>
+
+**_NOTE:_** The values (counts) stored in the `Counter` can be positive or negative as well as any data type 
 that supports addition and subtraction. However, the documentation warns that not all methods work with 
 all data types. See the *Note* at the bottom of the `Counter` section in the
 [official docs](https://docs.python.org/3/library/collections.html#collections.Counter).
@@ -13,6 +16,8 @@ all data types. See the *Note* at the bottom of the `Counter` section in the
 You can instantiate an empty `Counter` or by supplying an **iterable** (*str*, *list*, *etc*) or a **map** (dict, kwargs):
 
 ```python
+from collections import Counter
+
 # Empty Counter
 counter = Counter() 
 # >> Counter()
