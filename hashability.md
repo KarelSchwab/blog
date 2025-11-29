@@ -1,7 +1,7 @@
-# How to create hashable items in Python
+## What does it mean for an object to be hashable
 
-An object in Python is "hashable" if a numeric value (hash) can be calulated for it. Th hash cannot change 
-during the lifetime of the object and should also be usable when checking for equality of two objects. 
+An object in Python is **hashable** if a numeric value (hash) can be calculated for it. The hash cannot change 
+during the lifetime of the object and should also be usable when the object is compared for equality. 
 
 You can get the hash of an object by using the `hash` function:
 
@@ -10,7 +10,7 @@ hash(object)
 # >> 1532586
 ```
 
-NOTE: If an object is not hashable, a TypeError will be raised
+**_NOTE:_** If an object is not hashable, a TypeError will be raised
 
 ## Hashable vs Unhashable types
 
@@ -37,17 +37,17 @@ instance created. Meaning lists and dictionaries are not hashable but strings ar
 ## Why hashability matters
 
 The real power of hashing comes into play when we work with *hash-based* collections such as sets and 
-dictionaries. In these collections, items can be looked up using their hashes instead of iterrating over all 
+dictionaries. In these collections, items can be looked up using their hashes instead of iterating over all 
 the elements and checking each one individually. Because we know the hash of an object we can fetch the object 
 from a collection directly resulting in a *constant time `O(1)` lookup*. 
 
-## Example and use case
+## Example: Making a Python class hashable
 
 Let's look at a hypothetical scenario where we want to keep track of books in a 
 [Counter](https://karelschwab.com/blog/python-counter/). The issue is that we have multiple different 
 bookstores entering book details into our database which leads to inconsistencies. For example, bookstore 1
 creates a book entry entitled "The Hobbit" while bookstore 2 creates an entry for the same book called
-"The Hobbit - 75th Aniversary Edition".
+"The Hobbit - 75th Anniversary Edition".
 
 Let's create our `Book` class where we will be storing the book information:
 
@@ -61,7 +61,7 @@ class Book:
         return f"{self.title} - {self.isbn}"
 ```
 
-NOTE: I've used `__repr__` for this example because it displays nicely when we print out the `Counter`.
+**_NOTE:_** I've used `__repr__` for this example because it displays nicely when we print out the `Counter`.
 
 We can then create our two book instances and load them into our `Counter`:
 
@@ -69,10 +69,10 @@ We can then create our two book instances and load them into our `Counter`:
 from collections import Counter
 
 book_1 = Book("9780547928227", "The Hobbit")
-book_2 = Book("9780547928227", "The Hobbit - 75th Aniversary Edition")
+book_2 = Book("9780547928227", "The Hobbit - 75th Anniversary Edition")
 
 book_counter = Counter([book_1, book_2])
-# >> Counter({The Hobbit - 9780547928227: 1, The Hobbit - 75th Aniversary Edition - 9780547928227: 1})
+# >> Counter({The Hobbit - 9780547928227: 1, The Hobbit - 75th Anniversary Edition - 9780547928227: 1})
 ```
 
 Note how our `Counter` contains two entries, one for each book with a count of 1. We don't want this to be 
@@ -81,7 +81,7 @@ the hashes of our two book instances our problem becomes clear:
 
 ```python title="python"
 book_1 = Book("9780547928227", "The Hobbit")
-book_2 = Book("9780547928227", "The Hobbit - 75th Aniversary Edition")
+book_2 = Book("9780547928227", "The Hobbit - 75th Anniversary Edition")
 
 hash(book_1)
 # >> 7971003730177
@@ -122,16 +122,16 @@ class Book:
         return f"{self.title} - {self.isbn}"
 ```
 
-Our code where we check book 1 and two for equality `book_1 == book_2` now results in `True`. That is exactly
+Our code where we check book 1 and 2 for equality (`book_1 == book_2`) now results in `True`. That is exactly
 what we want. However, we now run into a different issue. When trying to compute the hash for each of our
 book instances we now see `TypeError: unhashable type: 'Book'`. This is because of the `__eq__` method we added
-to our Book class. When `__eq__` is defined on an object, Python automatically sets `__hash__` to `None` on 
-that object to avoid and incorrect behaviour where two objects are equal (based on our `__eq__` logic) but they
-have different hashes. That is exactly what's happening in our case. We have two books that appear equal but
-will have completely different hashes because we have not told Python how the hashes should be calulated 
-(the default behaviour of using `id` will be used).
+to our Book class. When `__eq__` is defined on an object and we do not explicitly define a `__hash__` method, 
+Python automatically sets `__hash__` to `None` on to avoid incorrect behaviour where two objects are equal 
+(based on our `__eq__` logic) but they have different hashes. That is exactly what's happening in our case. 
+We have two books that appear equal but will have completely different hashes because we have not told Python 
+how the hashes should be calculated (the default behaviour of using `id` will be used).
 
-Let's fix it by defining our `__hash__` method on our `Book` class to specify that the *ISBN* string should be
+Let's fix it by defining our own `__hash__` method on our `Book` class to specify that the *ISBN* string should be
 used to calculate the hash:
 
 ```python title="python"
@@ -155,7 +155,7 @@ are equal:
 
 ```python title="python"
 book_1 = Book("9780547928227", "The Hobbit")
-book_2 = Book("9780547928227", "The Hobbit - 75th Aniversary Edition")
+book_2 = Book("9780547928227", "The Hobbit - 75th Anniversary Edition")
 
 hash(book_1)
 # >> 2082949608248145613
@@ -174,14 +174,14 @@ The `Counter` should now also work as expected because the hashes match up corre
 from collections import Counter
 
 book_1 = Book("9780547928227", "The Hobbit")
-book_2 = Book("9780547928227", "The Hobbit - 75th Aniversary Edition")
+book_2 = Book("9780547928227", "The Hobbit - 75th Anniversary Edition")
 
 book_counter = Counter([book_1, book_2])
 # >> Counter({The Hobbit - 9780547928227: 2})
 ```
 
-NOTE: The name of the first book added appears in the `Counter`. If we add `book_2` first and print 
-`book_counter` again we would see `Counter({The Hobbit - 75th Aniversary Edition - 9780547928227: 2})`
+**_NOTE:_** The name of the first book added appears in the `Counter`. If we add `book_2` first and print 
+`book_counter` again we would see `Counter({The Hobbit - 75th Anniversary Edition - 9780547928227: 2})`
 
 And there we have it. We can now add as many books to our `Counter` as we want and as long as the *ISBN*s
 are the same the book will not be added as a new book but instead its counter value incremented.
