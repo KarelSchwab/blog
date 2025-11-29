@@ -43,11 +43,13 @@ from a collection directly resulting in a *constant time `O(1)` lookup*.
 
 ## Example: Making a Python class hashable
 
-Let's look at a hypothetical scenario where we want to keep track of books in a 
-[Counter](https://karelschwab.com/blog/python-counter/). The issue is that we have multiple different 
-bookstores entering book details into our database which leads to inconsistencies. For example, bookstore 1
-creates a book entry entitled "The Hobbit" while bookstore 2 creates an entry for the same book called
-"The Hobbit - 75th Anniversary Edition".
+Let's look at a hypothetical scenario where we want to keep track of books in a `Counter` from the `collections`
+Python module. The issue is that we have multiple different bookstores entering book details into our database 
+which leads to inconsistencies. For example, bookstore 1 creates a book entry entitled "The Hobbit" while 
+bookstore 2 creates an entry for the same book called "The Hobbit - 75th Anniversary Edition".
+
+<u>Read more about the `Counter` class in my post called 
+[Python Counter](https://karelschwab.com/blog/python-counter/).</u>
 
 Let's create our `Book` class where we will be storing the book information:
 
