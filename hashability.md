@@ -1,3 +1,5 @@
+For the short-form version of this post, have a look at its [short](https://karelschwab.com/short/creating-a-hashable-object-in-python/).
+
 ## What does it mean for an object to be hashable
 
 An object in Python is **hashable** if a numeric value (hash) can be calculated for it. The hash cannot change 
@@ -14,10 +16,10 @@ hash(object)
 
 ## Hashable vs Unhashable types
 
-Many types in python are hashable by default. A rule of thumb is that an object is most likely hashable if its
+Many types in Python are hashable by default. A rule of thumb is that an object is most likely hashable if its
 content cannot change without reassignment. For example, lists and dictionaries can have more items added to
 them without the need to create a new `list` or `dict` whereas a `str` can only be updated by having a new 
-instance created. Meaning lists and dictionaries are not hashable but strings are.
+instance created. This means lists and dictionaries are not hashable, but strings are.
 
 | Type      | Hashable?                             |
 |-----------|---------------------------------------|
@@ -44,7 +46,7 @@ from a collection directly resulting in a *constant time `O(1)` lookup*.
 ## Example: Making a Python class hashable
 
 Let's look at a hypothetical scenario where we want to keep track of books in a `Counter` from the `collections`
-Python module. The issue is that we have multiple different bookstores entering book details into our database 
+Python module. The issue is that we have multiple different bookstores entering book details into our database, 
 which leads to inconsistencies. For example, bookstore 1 creates a book entry entitled "The Hobbit" while 
 bookstore 2 creates an entry for the same book called "The Hobbit - 75th Anniversary Edition".
 
@@ -96,9 +98,9 @@ book_1 == book_2
 ```
 
 The hashes are different and the book therefore gets added to our `Counter` twice. By default, custom objects
-in python have their *identity* `id` used as their *hash* as long as the object does not have `__eq__` defined.
+in Python have their *identity* `id` used as their *hash* as long as the object does not have `__eq__` defined.
 
-You can see an objects *identity* like this:
+You can see an object's *identity* like this:
 
 ```python title="python"
 id(book_1)
@@ -128,7 +130,7 @@ Our code where we check book 1 and 2 for equality (`book_1 == book_2`) now resul
 what we want. However, we now run into a different issue. When trying to compute the hash for each of our
 book instances we now see `TypeError: unhashable type: 'Book'`. This is because of the `__eq__` method we added
 to our Book class. When `__eq__` is defined on an object and we do not explicitly define a `__hash__` method, 
-Python automatically sets `__hash__` to `None` on to avoid incorrect behaviour where two objects are equal 
+Python automatically sets `__hash__` to `None` to avoid incorrect behaviour where two objects are equal 
 (based on our `__eq__` logic) but they have different hashes. That is exactly what's happening in our case. 
 We have two books that appear equal but will have completely different hashes because we have not told Python 
 how the hashes should be calculated (the default behaviour of using `id` will be used).
@@ -185,5 +187,5 @@ book_counter = Counter([book_1, book_2])
 **_NOTE:_** The name of the first book added appears in the `Counter`. If we add `book_2` first and print 
 `book_counter` again we would see `Counter({The Hobbit - 75th Anniversary Edition - 9780547928227: 2})`
 
-And there we have it. We can now add as many books to our `Counter` as we want and as long as the *ISBN*s
-are the same the book will not be added as a new book but instead its counter value incremented.
+And there we have it. We can now add as many books to our `Counter` as we want, and as long as the *ISBN*s
+are the same the book will not be added as a new book but instead have its counter value incremented.

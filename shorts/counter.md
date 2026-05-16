@@ -1,21 +1,4 @@
-For the short-form version of this post, have a look at its [short](https://karelschwab.com/short/python-counter/).
-
-The `Counter` class, part of the `collections` package, does well... what the name says. It counts things.
-And by things I mean any hashable objects. In a `Counter` the hashable objects are the keys and their counts
-are the values. Under the hood it is just a Python dictionary with some niceties to allow us to easily
-keep count of objects stored within.
-
-<u>Read more about hashable objects in my posts called 
-[Hashable objects in Python](https://karelschwab.com/blog/hashable-objects-in-python).</u>
-
-**_NOTE:_** The values (counts) stored in the `Counter` can be positive or negative as well as any data type 
-that supports addition and subtraction. However, the documentation warns that not all methods work with 
-all data types. See the *Note* at the bottom of the `Counter` section in the
-[official docs](https://docs.python.org/3/library/collections.html#collections.Counter).
-
 ## Instantiation
-
-You can instantiate an empty `Counter` or by supplying an **iterable** (*str*, *list*, *etc*) or a **map** (dict, kwargs):
 
 ```python
 from collections import Counter
@@ -43,8 +26,6 @@ counter = Counter(red=255, green=100, blue=200)
 
 ## Accessing counts
 
-You can access the counts via indexing / subscription:
-
 ```python
 counter = Counter("mississippi") 
 counter["s"]
@@ -53,16 +34,7 @@ counter["x"] # Note how we don't get a KeyError
 # >> 0
 ```
 
-**Note:** If we try to access a key that is not in the `Counter`, 0 is returned. With a normal `dict` we would
-get a `KeyError`.
-
-## Working with the counts
-
-We can manipulate the counts through the use of the `update` and `subtract` methods:
-
 ### Subtract
-
-Examples of using the `subtract` method:
 
 ```python
 counter = Counter("mississippi") 
@@ -88,8 +60,6 @@ counter.subtract(s=3, p=1, m=1)
 
 ### Update
 
-Examples of using the `update` method:
-
 ```python
 counter = Counter("mississippi") 
 # >> Counter({'i': 4, 's': 4, 'p': 2, 'm': 1})
@@ -114,9 +84,7 @@ counter.update(s=3, p=1, m=1)
 
 ## Useful Methods
 
-In addition to handling the counts for us, `Counter` also has a few methods that are quite useful.
-
-- `elements`: Returns an iterator that repeats each element as many times as its count
+### Elements
 
 ```python
 counter = Counter("mississippi") 
@@ -135,7 +103,7 @@ print(sorted(counter.elements(), reverse=True))
 # >> ['s', 's', 's', 's', 'p', 'p', 'm', 'i', 'i', 'i', 'i']
 ```
 
-- `most_common`: Return a list of the *n* most common elements and their counts in tuples
+### Most common
 
 ```python
 counter = Counter("mississippi")
@@ -149,7 +117,7 @@ print(counter.most_common(2))
 # >> [('i', 4), ('s', 4)]
 ```
 
-- `total`: Returns the sum of all the counts
+### Total
 
 ```python
 counter = Counter("mississippi")
@@ -159,22 +127,9 @@ print(counter.total())
 # >> 11
 ```
 
-Since `Counter` is a subclass of `dict` it also has access to the common dictionary function like `keys`,
-`values`, `items`, and `clear`. We can also remove an item entirely by using `del`:
-
-```python
-counter = Counter("mississippi") 
-# >> Counter({'i': 4, 's': 4, 'p': 2, 'm': 1})
-
-del counter["i"]
-# >> Counter({'s': 4, 'p': 2, 'm': 1})
-```
-
-## Arithmetic and other operations
+## Arithmetic
 
 ### Addition
-
-We can add two `Counter`s together in the following way:
 
 ```python
 counter_1 = Counter("mississippi")
@@ -185,11 +140,7 @@ counter_3 = counter_1 + counter_2
 # >> Counter({'p': 12, 'x': 5, 'm': 4, 'i': 4, 's': 4})
 ```
 
-**Note:** Only positive counts are added to the newly created counter.
-
 ### Subtraction
-
-We can also subtract a `Counter` from another:
 
 ```python
 counter_1 = Counter("mississippi")
@@ -200,13 +151,7 @@ counter_3 = counter_1 - counter_2
 # >> Counter({'i': 4, 'y': 3, 's': 2, 'p': 1})
 ```
 
-**Note:** Only positive counts are kept in the resulting counter. Also note how the *y* was *-3* before
-the subtraction and that its sign was flipped to *+* during the operation, ending up as a positive *3*.
-
 ### Intersection
-
-We can use `&` to check where two counters have the same objects and what the smallest counts for the
-overlapping objects are:
 
 ```python
 counter_1 = Counter("mississippi")
@@ -217,13 +162,7 @@ counter_3 = counter_1 & counter_2
 # >> Counter({'s': 2, 'm': 1, 'i': 1})
 ```
 
-**Note:** *m* comes from `counter_1` while both *s* and *i* come from `counter_2` because their counts were the
-smallest.
-
 ### Union
-
-We can use `|` to get the largest counts from two `Counter`s. This returns a new `Counter` where all the unique 
-objects from each are included as well as the largest of the two in the cases where there are overlapping objects:
 
 ```python
 counter_1 = Counter("mississippi")
@@ -233,6 +172,4 @@ counter_2 = Counter("mmmissx")
 counter_3 = counter_1 | counter_2
 # >> Counter({'i': 4, 's': 4, 'm': 3, 'p': 2, 'x': 1})
 ```
-
-**Note:** *i*, *s*, and *p* all come from `counter_1` while *m* and *x* both come from `counter_2`.
 

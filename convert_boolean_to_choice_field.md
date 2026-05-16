@@ -1,17 +1,17 @@
 I recently ran into a situation where I needed to convert a `BooleanField` (True / False) to a `CharField` with 
-three choices—**Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward, however, 
+three choices - **Yes**, **No**, and **Maybe**. Django’s migration system makes schema changes straightforward; however, 
 this feature has been in use for a while, and I wanted to preserve both the original state and the field name during 
 the migration.
 
-For this example I’ll use a model called `Invite`. It’s a simple model that represents an invitation where the 
-recipient RSVPs to attending. Initially the RSVP was a boolean—Yes or No—and we’re adding a third option, Maybe, so 
+For this example, I’ll use a model called `Invite`. It’s a simple model that represents an invitation where the 
+recipient RSVPs. Initially the RSVP was a boolean—Yes or No—and we’re adding a third option, Maybe, so 
 we’ll migrate the field to a `CharField` with choices.
 
 For invitations where a recipient has RSVP’d **Yes**, we need to preserve that they’re attending, while ensuring new 
 invitations default to **Maybe**. We also want the option to roll the change back if needed.
 
 We’ll do this in a few steps: create a temporary field, copy the existing values into it, alter the original field to 
-a `CharField` with the new choices, and then lastly remove the temporary field.
+a `CharField` with the new choices, and lastly remove the temporary field.
 
 This is the code that we'll be starting with:
 
@@ -55,7 +55,7 @@ class Invite(models.Model):
 ## Step 1: Create a temporary field
 
 We'll start by defining the available choices for the RSVP status using Django's `models.TextChoices` subclass. You can
-read more about them in the [Django docs](https://docs.djangoproject.com/en/5.2/ref/models/fields/#enumeration-types) 
+read more about them in the [Django docs](https://docs.djangoproject.com/en/5.2/ref/models/fields/#enumeration-types). 
 
 ```python title="invite/models.py"
 class RSVPChoices(models.TextChoices):
@@ -187,7 +187,7 @@ class Migration(migrations.Migration):
 ```
 
 We want this migration to be reversible. That means defining two separate functions, one for migrating **forwards** 
-and one for **backwards**. Let's call them `copy_forwards` and `copy_backwards`(the names don’t matter).
+and one for **backwards**. Let's call them `copy_forwards` and `copy_backwards` (the names don’t matter).
 
 
 ```python {title="invite/migrations/0002_invite_temp_rsvp_status.py"}
@@ -331,7 +331,7 @@ python manage.py migrate
 
 ## Step 3: Alter the original field
 
-With our copy logic in place we now need to swap the original RSVP field with the new one. For this we will create
+With our copy logic in place, we now need to swap the original RSVP field with the new one. For this we will create
 another empty migration and write some custom rename logic.
 
 ```bash
@@ -385,7 +385,7 @@ python manage.py migrate
 
 ## Step 4: Cleanup, remove the temporary field
 
-Last we need to do some cleanup. Remove the temporary RSVP status field and ensure that the constraints match that of 
+Lastly, we need to do some cleanup. Remove the temporary RSVP status field and ensure that the constraints match that of 
 our migration.
 
 ```python {title="invite/models.py"}
@@ -430,8 +430,7 @@ Go ahead and apply the migration
 python manage.py migrate
 ```
 
-And that's it. Your new RSVP status choice should now reflect the state of the previous checkbox. Just how we want 
-it.
+And that's it. Your new RSVP status choice should now reflect the state of the previous checkbox, just how we want it.
 
 You can access the code on [GitHub](https://github.com/KarelSchwab/boolean_to_choice_field). Head on over to the 
 `commits` to see each step in its own commit.
